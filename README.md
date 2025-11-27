@@ -40,12 +40,14 @@ A comprehensive Advanced Driver Assistance Systems (ADAS) implementation for the
 1. **Install CARLA Simulator**
    ```bash
    # Download CARLA from https://github.com/carla-simulator/carla/releases
-   # Extract and ensure CARLA server is running
+   # Extract to your desired location
    ```
 
 2. **Install Python Dependencies**
    ```bash
    pip install -r requirements.txt
+   # or
+   pip3 install -r requirements.txt
    ```
 
 3. **Set up CARLA Python API**
@@ -56,10 +58,36 @@ A comprehensive Advanced Driver Assistance Systems (ADAS) implementation for the
 
 ## 💻 Usage
 
+### Quick Start
+
+**Step 1: Start CARLA Simulator**
+
+Open a terminal and navigate to your CARLA installation directory, then start the CARLA server:
+
+```bash
+cd carla_simulator
+./CarlaUE4.sh -quality-level=Low -prefernvidia -nosound
+```
+
+**Step 2: Run the ADAS Simulation**
+
+In a new terminal, navigate to the examples directory and run the simulation:
+
+```bash
+cd carla_simulator/PythonAPI/examples
+python3 tara.py --sync --agent Behavior --loop -n 30
+```
+
+This command will:
+- Run in synchronous mode (`--sync`)
+- Use the Behavior agent (`--agent Behavior`)
+- Loop to new destinations automatically (`--loop`)
+- Spawn 30 traffic vehicles (`-n 30`)
+
 ### Basic Usage
 
 ```bash
-python tara.py
+python3 tara.py
 ```
 
 ### Command Line Options
@@ -98,12 +126,64 @@ Options:
 ### Example: Running with Custom Settings
 
 ```bash
+# Recommended: Run with synchronous mode, Behavior agent, looping, and 30 vehicles
+python3 tara.py --sync --agent Behavior --loop -n 30
+
 # Run with 100 traffic vehicles, aggressive behavior, synchronous mode
-python tara.py --sync -n 100 -b aggressive --res 1920x1080
+python3 tara.py --sync -n 100 -b aggressive --res 1920x1080
 
 # Run with debug output and custom seed
-python tara.py -v -s 42 --agent Behavior
+python3 tara.py -v -s 42 --agent Behavior
+
+# Run with more traffic vehicles for intensive testing
+python3 tara.py --sync --agent Behavior --loop -n 50
 ```
+
+## 📸 Screenshots
+
+### Main Simulation View
+![Main Simulation](screenshots/main_simulation.png)
+*Main simulation view showing the vehicle with ADAS systems active*
+
+### ADAS HUD Display
+![ADAS HUD](screenshots/adas_hud.png)
+*Real-time ADAS status display showing FCW, ACC, LDW, and other system states*
+
+### Forward Collision Warning
+![FCW Alert](screenshots/fcw_warning.png)
+*Forward Collision Warning system detecting an obstacle ahead with TTC calculation*
+
+### Adaptive Cruise Control
+![ACC Active](screenshots/acc_active.png)
+*Adaptive Cruise Control maintaining safe distance from lead vehicle*
+
+### Lane Departure Warning
+![LDW Alert](screenshots/ldw_alert.png)
+*Lane Departure Warning alerting when vehicle drifts from lane center*
+
+### Blind Spot Detection
+![BSD Detection](screenshots/bsd_detection.png)
+*Blind Spot Detection identifying vehicles in adjacent lanes*
+
+### Sensor Visualization
+![Sensor View](screenshots/sensor_visualization.png)
+*Multi-sensor visualization showing camera, LiDAR, and GPS data*
+
+### Traffic Sign Recognition
+![TSR Display](screenshots/tsr_display.png)
+*Traffic Sign Recognition displaying current speed limit*
+
+### Emergency Braking Scenario
+![AEB Activation](screenshots/aeb_activation.png)
+*Automatic Emergency Braking system activating to prevent collision*
+
+---
+
+**Note**: To add your screenshots:
+1. Create a `screenshots/` folder in your repository
+2. Add your screenshot images (PNG or JPG format)
+3. Replace the placeholder image names above with your actual screenshot filenames
+4. The images will automatically display on GitHub
 
 ## 🏗️ Architecture
 
@@ -196,5 +276,11 @@ For questions or issues, please open an issue on GitHub.
 
 ---
 
-**Note**: This project requires a running CARLA simulator instance. Make sure CARLA server is running before executing the script.
+## ⚠️ Important Notes
+
+- **CARLA Server Must Be Running**: Always start the CARLA simulator first before running the Python script
+- **Terminal 1**: Run `./CarlaUE4.sh -quality-level=Low -prefernvidia -nosound` to start CARLA
+- **Terminal 2**: Run `python3 tara.py --sync --agent Behavior --loop -n 30` to start the ADAS simulation
+- **Synchronous Mode**: The `--sync` flag ensures deterministic simulation and is recommended for testing
+- **Performance**: Use `-quality-level=Low` for better performance on lower-end systems
 
