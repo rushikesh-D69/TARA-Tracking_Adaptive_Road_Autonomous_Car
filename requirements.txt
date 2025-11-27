@@ -1,0 +1,11 @@
+# Core dependencies
+numpy>=1.18.4
+pygame>=2.0.0
+matplotlib>=3.3.0
+Pillow>=8.0.0
+
+# Optional dependencies
+open3d>=0.13.0  # For LiDAR visualization
+
+# Python 2 compatibility (if needed)
+future; python_version < '3.0'
