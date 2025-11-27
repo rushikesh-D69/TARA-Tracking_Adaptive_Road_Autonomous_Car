@@ -180,6 +180,7 @@ python3 tara.py --sync --agent Behavior --loop -n 50
 ---
 
 [![PDF Preview](./pdf_preview.png)](./TID06.pdf)
+<iframe src="TID06.pdf" width="100%" height="800px"></iframe>
 
 
 
