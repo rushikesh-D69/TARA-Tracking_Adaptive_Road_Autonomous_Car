@@ -179,11 +179,9 @@ python3 tara.py --sync --agent Behavior --loop -n 50
 
 ---
 
-**Note**: To add your screenshots:
-1. Create a `screenshots/` folder in your repository
-2. Add your screenshot images (PNG or JPG format)
-3. Replace the placeholder image names above with your actual screenshot filenames
-4. The images will automatically display on GitHub
+[![PDF Preview](./pdf_preview.png)](./TIO06.pdf)
+
+
 
 ## 🏗️ Architecture
 
