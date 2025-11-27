@@ -179,7 +179,7 @@ python3 tara.py --sync --agent Behavior --loop -n 50
 
 ---
 
-[![PDF Preview](./pdf_preview.png)](./TIO06.pdf)
+[![PDF Preview](./pdf_preview.png)](./TID06.pdf)
 
 
 
