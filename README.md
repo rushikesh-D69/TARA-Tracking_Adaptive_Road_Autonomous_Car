@@ -15,6 +15,7 @@ A comprehensive Advanced Driver Assistance Systems (ADAS) implementation for the
 - **Intelligent Overtaking**: Automated overtaking system with safety checks
 - **Advanced Lane Detection**: Enhanced lane detection and tracking
 - **Sensor Visualization**: Real-time visualization of sensor data and ADAS alerts
+![Alt text](src/IMG-20251127-WA0003.jpg)
 
 ### Additional Features
 
