@@ -92,6 +92,7 @@ python3 tara.py
 ```
 
 ### Command Line Options
+![Alt text](src/IMG-20251127-WA0004.jpg)
 
 ```bash
 python tara.py [OPTIONS]
@@ -179,6 +180,7 @@ python3 tara.py --sync --agent Behavior --loop -n 50
 *Automatic Emergency Braking system activating to prevent collision*
 
 ---
+!LIDAR VIEW](src/IMG-20251127-WA0011.jpg)
 
 [![PDF Preview](./pdf_preview.png)](./TID06.pdf)
 <iframe src="TID06.pdf" width="100%" height="800px"></iframe>
@@ -255,6 +257,8 @@ The system includes a scenario manager for testing various driving conditions:
 - Lane change scenarios
 - Overtaking scenarios
 - Traffic intersection scenarios
+- 
+![Alt text](src/IMG-20251127-WA0010.jpg)
 
 ## 🤝 Contributing
 
@@ -264,17 +268,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is based on CARLA's automatic control example, which is licensed under the MIT License. See the original copyright notice in the source code.
 
-## 🙏 Acknowledgments
-
-- CARLA Simulator team at Intel Labs
-- Original automatic control implementation by German Ros
-- Enhanced with comprehensive ADAS features
-
-## 📧 Contact
-
-For questions or issues, please open an issue on GitHub.
-
----
 
 ## ⚠️ Important Notes
 
