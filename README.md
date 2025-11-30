@@ -2,7 +2,7 @@
 
 A comprehensive Advanced Driver Assistance Systems (ADAS) implementation for the CARLA autonomous driving simulator. This project demonstrates real-time safety features and intelligent driving assistance systems in a realistic simulation environment.
 
-## 🚗 Features
+##  Features
 
 ### Core ADAS Systems
 
@@ -36,7 +36,7 @@ A comprehensive Advanced Driver Assistance Systems (ADAS) implementation for the
 - Open3D (optional, for LiDAR visualization)
 - Pillow
 
-## 🚀 Installation
+##  Installation
 
 1. **Install CARLA Simulator**
    ```bash
@@ -57,7 +57,7 @@ A comprehensive Advanced Driver Assistance Systems (ADAS) implementation for the
    # The script automatically searches for carla module
    ```
 
-## 💻 Usage
+##  Usage
 
 ### Quick Start
 
@@ -200,7 +200,7 @@ tara.py
 4. **Control Integration**: ADASManager integrates all systems and modifies vehicle control
 5. **Visualization**: HUD displays real-time ADAS status and alerts
 
-## 🔬 Technical Details
+##  Technical Details
 
 ### Forward Collision Warning (FCW)
 - Calculates Time-to-Collision (TTC) with vehicles ahead
@@ -226,14 +226,14 @@ tara.py
 - Warns when vehicle drifts beyond threshold
 - Calculates distance to lane boundaries
 
-## 📊 Performance
+##  Performance
 
 - Real-time processing at 20-30 FPS (depending on hardware)
 - Low latency ADAS response (< 100ms)
 - Efficient sensor data processing
 - Optimized collision detection algorithms
 
-## 🧪 Testing
+##  Testing
 
 The system includes a scenario manager for testing various driving conditions:
 
@@ -243,11 +243,11 @@ The system includes a scenario manager for testing various driving conditions:
 - Traffic intersection scenarios
 - 
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📝 License
+##  License
 
 This project is based on CARLA's automatic control example, which is licensed under the MIT License. See the original copyright notice in the source code.
 
