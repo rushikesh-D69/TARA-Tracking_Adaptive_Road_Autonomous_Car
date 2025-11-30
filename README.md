@@ -92,7 +92,8 @@ python3 tara.py
 ```
 
 ### Command Line Options
-![Alt text](src/IMG-20251127-WA0004.jpg)
+
+![Alt text](src/IMG-20251127-WA0012.jpg)
 
 ```bash
 python tara.py [OPTIONS]
@@ -144,46 +145,29 @@ python3 tara.py --sync --agent Behavior --loop -n 50
 ## 📸 Screenshots
 
 ### Main Simulation View
-![Main Simulation](screenshots/main_simulation.png)
+![Main Simulation](src/IMG-20251127-WA0010.jpg)
 *Main simulation view showing the vehicle with ADAS systems active*
 
 ### ADAS HUD Display
-![ADAS HUD](screenshots/adas_hud.png)
+![ADAS HUD](src/IMG-20251127-WA0006.jpg)
 *Real-time ADAS status display showing FCW, ACC, LDW, and other system states*
 
 ### Forward Collision Warning
-![FCW Alert](screenshots/fcw_warning.png)
+![FCW Alert](src/IMG-20251127-WA0009.jpg)
 *Forward Collision Warning system detecting an obstacle ahead with TTC calculation*
 
 ### Adaptive Cruise Control
 ![ACC Active](screenshots/acc_active.png)
 *Adaptive Cruise Control maintaining safe distance from lead vehicle*
 
-### Lane Departure Warning
-![LDW Alert](screenshots/ldw_alert.png)
-*Lane Departure Warning alerting when vehicle drifts from lane center*
-
-### Blind Spot Detection
-![BSD Detection](screenshots/bsd_detection.png)
-*Blind Spot Detection identifying vehicles in adjacent lanes*
 
 ### Sensor Visualization
-![Sensor View](screenshots/sensor_visualization.png)
+![Sensor View](src/IMG-20251127-WA0004.jpg)
 *Multi-sensor visualization showing camera, LiDAR, and GPS data*
 
-### Traffic Sign Recognition
-![TSR Display](screenshots/tsr_display.png)
-*Traffic Sign Recognition displaying current speed limit*
-
-### Emergency Braking Scenario
-![AEB Activation](screenshots/aeb_activation.png)
-*Automatic Emergency Braking system activating to prevent collision*
 
 ---
-!LIDAR VIEW](src/IMG-20251127-WA0011.jpg)
-
-[![PDF Preview](./pdf_preview.png)](./TID06.pdf)
-<iframe src="TID06.pdf" width="100%" height="800px"></iframe>
+![LIDAR VIEW](src/IMG-20251127-WA0011.jpg)
 
 
 
@@ -258,7 +242,6 @@ The system includes a scenario manager for testing various driving conditions:
 - Overtaking scenarios
 - Traffic intersection scenarios
 - 
-![Alt text](src/IMG-20251127-WA0010.jpg)
 
 ## 🤝 Contributing
 
