@@ -1,7 +1,12 @@
 # CARLA ADAS Simulation System
 
-A comprehensive Advanced Driver Assistance Systems (ADAS) implementation for the CARLA autonomous driving simulator. This project demonstrates real-time safety features and intelligent driving assistance systems in a realistic simulation environment.
+A comprehensive Advanced Driver Assistance Systems (ADAS) implementation validated in the CARLA autonomous driving simulator. This project demonstrates a **"Sim-to-Real" workflow**, validating real-time safety features and algorithms optimized for unstructured environments before hardware deployment.
 
+![Main View](src/IMG-20251127-WA0010.jpg)
+
+## 🚀 Overview
+
+TARA bridges the gap between software simulation and hardware deployment. It implements a modular Python-based ADAS stack that processes sensor data (Camera, LiDAR, Radar) to execute safety-critical maneuvers in a realistic simulation environment. The goal is to validate the control logic in CARLA before porting the stack to a Raspberry Pi/Jetson Nano platform for the 1:10 scale physical prototype.
 ##  Features
 
 ### Core ADAS Systems
