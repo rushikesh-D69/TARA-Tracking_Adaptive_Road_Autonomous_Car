@@ -246,7 +246,6 @@ The system includes a scenario manager for testing various driving conditions:
 - Lane change scenarios
 - Overtaking scenarios
 - Traffic intersection scenarios
-- 
 
 ##  Contributing
 
