@@ -1,47 +1,80 @@
-# CARLA ADAS Simulation System
+# CARLA ADAS Simulation System  
+[![Python](https://img.shields.io/badge/Python-3.6+-blue.svg)]()  
+[![CARLA](https://img.shields.io/badge/CARLA-0.9.x-orange.svg)]()  
+[![ADAS](https://img.shields.io/badge/ADAS-ISO%2015623%20%7C%2015622%20%7C%2017361-green.svg)]()  
+[![Sim2Real](https://img.shields.io/badge/Workflow-Sim--to--Real-success.svg)]()  
+[![License: MIT](https://img.shields.io/badge/License-MIT-lightgrey.svg)]()
 
-A comprehensive Advanced Driver Assistance Systems (ADAS) implementation validated in the CARLA autonomous driving simulator. This project demonstrates a **"Sim-to-Real" workflow**, validating real-time safety features and algorithms optimized for unstructured environments before hardware deployment.
+A high-fidelity, ISO-parameter-aligned Advanced Driver Assistance System (ADAS) development pipeline implemented inside the **CARLA Autonomous Driving Simulator**.  
+This project demonstrates a complete **Simulation → Verification → Real-World Deployment** workflow for modular ADAS components.
+
+---
 
 ![Main View](src/IMG-20251127-WA0010.jpg)
 
+---
+
 ## 🚀 Overview
 
-TARA bridges the gap between software simulation and hardware deployment. It implements a modular Python-based ADAS stack that processes sensor data (Camera, LiDAR, Radar) to execute safety-critical maneuvers in a realistic simulation environment. The goal is to validate the control logic in CARLA before porting the stack to a Raspberry Pi/Jetson Nano platform for the 1:10 scale physical prototype.
-##  Features
+TARA (Tracking Adaptive Road Autonomous Vehicle) is a modular ADAS software stack written in Python and validated inside **CARLA 0.9.x**.  
+The system incorporates **ISO-certified ADAS behavioural thresholds** including:
+
+- **ISO 15623 – Forward Collision Warning (FCW) TTC thresholds**  
+- **ISO 15622 – Adaptive Cruise Control (ACC) distance/time-gap parameters**  
+- **ISO 17361 – Lane Departure Warning (LDW) criteria**  
+- **ISO 11452 – Environmental test modelling (weather, visibility)**  
+
+After simulation validation, the software stack is deployable on embedded compute platforms (Raspberry Pi / Jetson Nano) for a 1:10 scale autonomous prototype.
+
+---
+
+## ✨ Features
 
 ### Core ADAS Systems
 
-- **Forward Collision Warning (FCW)**: Real-time collision risk assessment with Time-to-Collision (TTC) calculation
-- **Automatic Emergency Braking (AEB)**: Autonomous emergency braking system to prevent collisions
-- **Adaptive Cruise Control (ACC)**: Intelligent speed control that maintains safe distance from lead vehicles
-- **Lane Departure Warning (LDW)**: Monitors lane position and alerts when vehicle drifts from lane center
-- **Blind Spot Detection (BSD)**: Detects vehicles in blind spots on both sides
-- **Traffic Sign Recognition (TSR)**: Recognizes and displays current speed limits
-- **Intelligent Overtaking**: Automated overtaking system with safety checks
-- **Advanced Lane Detection**: Enhanced lane detection and tracking
-- **Sensor Visualization**: Real-time visualization of sensor data and ADAS alerts
+- **Forward Collision Warning (FCW)** – TTC estimation using ISO 15623 models  
+- **Automatic Emergency Braking (AEB)** – Immediate braking on critical TTC  
+- **Adaptive Cruise Control (ACC)** – ISO 15622-compliant distance regulation  
+- **Lane Departure Warning (LDW)** – Deviation analysis via CARLA topology  
+- **Blind Spot Detection (BSD)** – Lateral hazard region monitoring  
+- **Traffic Sign Recognition (TSR)** – Speed-limit detection  
+- **Intelligent Overtaking** – Safe-gap analysis and manoeuvre execution  
+- **Advanced Lane Detection** – Enhanced polynomial fitting/lane geometry  
+- **Sensor Visualization** – Multi-modal rendering (RGB, LiDAR, GNSS, etc.)
+
 ![Alt text](src/IMG-20251127-WA0003.jpg)
+
+---
 
 ### Additional Features
 
-- **Scenario Manager**: Predefined driving scenarios for testing
-- **Multi-sensor Integration**: Camera, LiDAR, GPS, and collision sensors
-- **Real-time HUD**: Comprehensive heads-up display with ADAS status
-- **Traffic Generation**: Configurable traffic vehicle spawning
-- **Weather Simulation**: Dynamic weather conditions
-- **Synchronous Mode**: Deterministic simulation for testing
+- **Scenario Manager** for standardised testing  
+- **Synchronous Mode** for deterministic physics  
+- **Weather and Lighting Simulation** per ISO environmental testing  
+- **Traffic Generation** with varied behaviours  
+- **Real-time HUD** displaying ADAS telemetry (TTC, lane offset, speed limit)
+
+---
 
 ## 📋 Requirements
 
-- Python 3.6+
-- CARLA Simulator (0.9.x or later)
-- Pygame
-- NumPy
-- Matplotlib
-- Open3D (optional, for LiDAR visualization)
-- Pillow
+- Python 3.6+  
+- CARLA 0.9.x  
+- NumPy  
+- Pygame  
+- Matplotlib  
+- Pillow  
+- Open3D (optional)
 
-##  Installation
+---
+
+## ⚙️ Installation
+
+### 1. Install CARLA Simulator
+```bash
+# Download from https://github.com/carla-simulator/carla/releases
+# Extract to a preferred directory
+
 
 1. **Install CARLA Simulator**
    ```bash
