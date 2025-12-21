@@ -714,6 +714,550 @@ This project is based on CARLA's automatic control example, licensed under the M
 
 ---
 
+---
+
+## 🔬 Algorithmic & Geometric Insights from Implementation
+
+This section derives the **exact mathematical formulation** of the ADAS logic as implemented in `tara.py`, translating geometric heuristics and threshold logic into formal equations suitable for technical documentation or academic review.
+
+---
+
+### 📐 Coordinate Frames & Vector Projections
+
+All spatial reasoning in the ADAS stack is performed using **ego-centric projections** onto the vehicle's forward and right unit vectors.
+
+**Let:**
+- **p̄ₑ**: Ego vehicle position ∈ ℝ³
+- **p̄ₜ**: Target vehicle position ∈ ℝ³  
+- **f̂**: Ego forward unit vector (normalized)
+- **r̂**: Ego right unit vector (normalized)
+
+#### Relative Position Vector
+```
+r̄ = p̄ₜ - p̄ₑ = (dx, dy, dz)ᵀ
+```
+
+#### Euclidean Distance
+```
+d = ‖r̄‖ = √(dx² + dy² + dz²)
+```
+
+#### Implementation (from tara.py)
+```python
+dx = target_location.x - ego_location.x
+dy = target_location.y - ego_location.y
+dz = target_location.z - ego_location.z
+distance = math.sqrt(dx*dx + dy*dy + dz*dz)
+```
+
+---
+
+### 🚘 Forward Vehicle Detection (ACC + FCW)
+
+A vehicle is considered **ahead** if its relative position lies within a forward cone.
+
+#### Forward Projection (Dot Product Test)
+```
+cos(θ) = (f̂ · r̄) / ‖r̄‖
+```
+
+#### Ahead Condition (Implemented Threshold)
+```
+f̂ · (r̄/‖r̄‖) > 0.7
+```
+
+This corresponds to:
+```
+θ < cos⁻¹(0.7) ≈ 45.37°
+```
+
+**Why 0.7?** This threshold provides a **90° total cone** (±45° from centerline), balancing:
+- False positive reduction (ignoring side vehicles)
+- Coverage adequacy (detecting diagonal approaches)
+
+#### Implementation Extract
+```python
+# From AdaptiveCruiseControl.get_lead_vehicle()
+target_vector_x = dx / distance
+target_vector_y = dy / distance
+dot_product = ego_forward.x * target_vector_x + ego_forward.y * target_vector_y
+
+if dot_product > 0.7:  # Within ~45 degrees
+    if distance < min_distance:
+        min_distance = distance
+        closest_vehicle = vehicle
+```
+
+Vehicles outside this angular range are **ignored** for ACC and FCW processing.
+
+---
+
+### ⏱️ Forward Collision Warning (FCW) – Closing Velocity Model
+
+#### Ego and Target Velocities
+```
+v̄ₑ = (vₑₓ, vₑᵧ, vₑᵤ)ᵀ  
+v̄ₜ = (vₜₓ, vₜᵧ, vₜᵤ)ᵀ
+```
+
+#### Relative Velocity
+```
+v̄ᵣₑₗ = v̄ₑ - v̄ₜ
+```
+
+#### Closing Speed (Projected onto Forward Vector)
+```
+vϲ = f̂ · v̄ᵣₑₗ = f̂ₓ·(vₑₓ - vₜₓ) + f̂ᵧ·(vₑᵧ - vₜᵧ) + f̂ᵤ·(vₑᵤ - vₜᵤ)
+```
+
+#### TTC Computation (Only if Closing)
+```
+       ⎧ d/vϲ      if vϲ > 0.5 m/s
+TTC = ⎨
+       ⎩ ∞         if vϲ ≤ 0.5 m/s
+```
+
+**Minimum Closing Speed Threshold (0.5 m/s)**: Filters out stationary/diverging vehicles to prevent spurious warnings.
+
+#### Implementation
+```python
+# From ForwardCollisionWarning.check_collision_risk()
+rel_vel_x = ego_velocity.x - target_velocity.x
+rel_vel_y = ego_velocity.y - target_velocity.y
+rel_vel_z = ego_velocity.z - target_velocity.z
+
+# Calculate closing speed
+closing_speed = (ego_forward.x * rel_vel_x + 
+                ego_forward.y * rel_vel_y + 
+                ego_forward.z * rel_vel_z)
+
+if closing_speed > 0.5:
+    ttc = distance / closing_speed
+```
+
+#### Alert Classification
+```
+CRITICAL    if TTC < 1.0s
+WARNING     if 1.0s ≤ TTC < 2.0s
+NONE        if TTC ≥ 2.0s
+```
+
+These thresholds are **hard-coded** in the FCW class and directly drive HUD alerts.
+
+---
+
+### 🛑 Automatic Emergency Braking (AEB) – Safety Override Logic
+
+AEB is implemented as a **logical override**, not a controller.
+
+#### Activation Condition
+```
+       ⎧ 1.0    if (FCW = CRITICAL) ∧ (TTC < 0.8s)
+Brake = ⎨
+       ⎩ 0.0    otherwise
+```
+
+Throttle is simultaneously forced to zero:
+```
+u_throttle = 0
+```
+
+#### Implementation
+```python
+# From AutomaticEmergencyBraking.should_brake()
+def should_brake(self, fcw_system, world):
+    alert_level, target, ttc = fcw_system.check_collision_risk(world)
+    
+    if self.enabled and alert_level == ADASAlertLevel.CRITICAL and ttc < self.activation_ttc:
+        return True, ttc
+    
+    return False, ttc
+
+# From ADASManager.update()
+if self.aeb and self.fcw:
+    should_brake, brake_ttc = self.aeb.should_brake(self.fcw, self.world)
+    if should_brake:
+        control.brake = 1.0
+        control.throttle = 0.0
+```
+
+This represents a **fail-safe, non-smooth emergency intervention**, consistent with production AEB behavior.
+
+---
+
+### 🚗 Adaptive Cruise Control (ACC) – Heuristic Speed Law
+
+Unlike classical PID ACC, this implementation uses a **piecewise speed heuristic**.
+
+#### Lead Vehicle Speed (km/h)
+```
+vₗ = 3.6 × ‖v̄ₜ‖ = 3.6 × √(vₜₓ² + vₜᵧ² + vₜᵤ²)
+```
+
+**Conversion factor**: 3.6 = (3600 s/hr) / (1000 m/km)
+
+#### Safe Distance (ISO 15622)
+```
+d_safe = (vₗ/3.6) × h + d_min
+```
+
+Where:
+- **h = 2.0s** (time headway)
+- **d_min = 5.0m** (minimum standstill distance)
+
+#### Target Speed Selection (Tri-Modal Heuristic)
+```
+              ⎧ max(0, vₗ - 10)           if d < d_safe
+              ⎪
+v_cmd(d) =   ⎨ vₗ                        if d_safe ≤ d < 1.5·d_safe
+              ⎪
+              ⎩ min(v_set, vₗ + 5)        if d ≥ 1.5·d_safe
+```
+
+**Zones Explained:**
+1. **Close Range** (d < d_safe): Decelerate 10 km/h below lead
+2. **Comfort Zone** (d_safe to 1.5·d_safe): Match lead speed exactly
+3. **Open Road** (d ≥ 1.5·d_safe): Accelerate toward set speed
+
+#### Implementation
+```python
+# From AdaptiveCruiseControl.calculate_target_speed()
+def calculate_target_speed(self, lead_vehicle, distance):
+    if lead_vehicle is None:
+        return self.target_speed
+        
+    lead_velocity = lead_vehicle.get_velocity()
+    lead_speed = 3.6 * math.sqrt(lead_velocity.x**2 + 
+                                 lead_velocity.y**2 + 
+                                 lead_velocity.z**2)
+    
+    safe_distance = lead_speed / 3.6 * self.time_gap + self.min_distance
+    
+    if distance < safe_distance:
+        return max(0, lead_speed - 10)
+    elif distance < safe_distance * 1.5:
+        return lead_speed
+    else:
+        return min(self.target_speed, lead_speed + 5)
+```
+
+This avoids oscillations while remaining **computationally cheap** (no integration, no tuning).
+
+---
+
+### 🛣️ Lane Departure Warning (LDW) – Cross Product Geometry
+
+Lane deviation is computed using a **2D cross-product magnitude**.
+
+**Let:**
+- **l̄**: Lane center point (from CARLA waypoint)
+- **d̂**: Lane forward direction (unit vector)
+
+#### Lateral Offset (Perpendicular Distance)
+```
+eᵧ = |(xₑ - xₗ)·d̂ᵧ - (yₑ - yₗ)·d̂ₓ|
+```
+
+**Geometric Interpretation**: This is the **magnitude of the 2D cross product**, giving the perpendicular distance to the lane centerline.
+
+#### Alert Thresholds
+```
+WARNING     if eᵧ > 0.5m
+CRITICAL    if eᵧ > 0.75m
+```
+
+#### Implementation
+```python
+# From LaneDepartureWarning.check_lane_departure()
+lane_center = waypoint.transform.location
+lane_direction = waypoint.transform.get_forward_vector()
+
+# Vector to vehicle
+dx = vehicle_location.x - lane_center.x
+dy = vehicle_location.y - lane_center.y
+
+# Cross product for lateral distance
+lateral_offset = abs(dx * lane_direction.y - dy * lane_direction.x)
+
+if lateral_offset > self.lateral_offset_threshold * 1.5:
+    return ADASAlertLevel.CRITICAL, lateral_offset
+elif lateral_offset > self.lateral_offset_threshold:
+    return ADASAlertLevel.WARNING, lateral_offset
+```
+
+This formulation is **robust to map curvature** and avoids noisy heading estimates.
+
+---
+
+### 👀 Blind Spot Detection (BSD) – Region-Based Classification
+
+Blind spots are modeled as **rectangular regions** in ego coordinates.
+
+#### Coordinate Transform (World → Vehicle Frame)
+```
+⎡ xᵣₑₗ ⎤   ⎡ f̂ₓ   f̂ᵧ ⎤ ⎡ dx ⎤
+⎣ yᵣₑₗ ⎦ = ⎣ r̂ₓ   r̂ᵧ ⎦ ⎣ dy ⎦
+```
+
+Where:
+- **xᵣₑₗ = f̂ · r̄** (longitudinal distance)
+- **yᵣₑₗ = r̂ · r̄** (lateral distance)
+
+#### Blind Spot Zone Definition
+```
+BSD_zone = {
+    -2.0m < xᵣₑₗ < 5.0m     (longitudinal)
+    1.5m < |yᵣₑₗ| < 3.5m    (lateral)
+}
+```
+
+#### Classification Logic
+```
+BSD_left  = (xᵣₑₗ ∈ [-2, 5]) ∧ (yᵣₑₗ ∈ [-3.5, -1.5])
+BSD_right = (xᵣₑₗ ∈ [-2, 5]) ∧ (yᵣₑₗ ∈ [1.5, 3.5])
+```
+
+#### Implementation
+```python
+# From BlindSpotDetection.check_blind_spots()
+# Calculate lateral and longitudinal distances
+lateral_dist = ego_right.x * dx + ego_right.y * dy + ego_right.z * dz
+longitudinal_dist = ego_forward.x * dx + ego_forward.y * dy + ego_forward.z * dz
+
+# Check if in blind spot zone
+if -2.0 < longitudinal_dist < self.detection_range:
+    if 1.5 < abs(lateral_dist) < self.lateral_range:
+        if lateral_dist > 0:
+            right_blind_spot = True
+            right_vehicles.append((vehicle, distance))
+        else:
+            left_blind_spot = True
+            left_vehicles.append((vehicle, distance))
+```
+
+**Design Rationale**: The `-2.0m` rear boundary accounts for **trailer swing** and **merge scenarios**.
+
+---
+
+### 🔁 Intelligent Overtaking – Gap Optimization Logic
+
+Overtaking is triggered only if **all three conditions** are satisfied:
+
+#### 1. Speed Advantage Exists
+```
+vₑ - vₜ > 3.0 m/s  (≈ 10.8 km/h)
+```
+
+#### 2. Lane Gap Availability
+```
+g_left, g_right = analyze_gaps()
+max(g_left, g_right) > 15.0m
+```
+
+#### 3. Safe Overtaking Distance
+```
+d_overtake = d_lead + 20.0m
+```
+
+#### Lane Selection (Greedy)
+```
+Lane = argmax{g_left, g_right}
+```
+
+#### Steering Command (Proportional)
+```
+δ = lateral_offset / 10.0
+```
+
+This approximates a **proportional lateral controller** without trajectory planning.
+
+#### Implementation
+```python
+# From IntelligentOvertaking.analyze_overtaking_opportunity()
+if closest_vehicle['speed_difference'] < 3.0:  # Not much speed advantage
+    return False, None, None
+
+left_gap, right_gap = self._analyze_lane_gaps(ego_location, ego_forward, ego_right)
+
+# Choose best lane for overtaking
+if left_gap > right_gap and left_gap > self.min_gap_distance:
+    return True, closest_vehicle, 'left'
+elif right_gap > self.min_gap_distance:
+    return True, closest_vehicle, 'right'
+```
+
+---
+
+### ⚠️ ADAS Arbitration Model
+
+The ADAS Manager enforces a **priority hierarchy**:
+
+```
+AEB ≻ FCW ≻ LDW ≻ ACC ≻ Overtaking
+```
+
+Control authority is **overridden in descending order** of safety criticality.
+
+#### Control Flow
+```python
+# From ADASManager.update()
+# 1. Forward Collision Warning (informational)
+if self.fcw:
+    fcw_level, target, ttc = self.fcw.check_collision_risk(self.world)
+    
+# 2. Automatic Emergency Braking (highest priority)
+if self.aeb and self.fcw:
+    should_brake, brake_ttc = self.aeb.should_brake(self.fcw, self.world)
+    if should_brake:
+        control.brake = 1.0  # Override all other commands
+        control.throttle = 0.0
+
+# 3. Lane Departure Warning (informational)
+# 4. Blind Spot Detection (informational)
+# 5. Adaptive Cruise Control (modulates throttle)
+# 6. Intelligent Overtaking (modulates steering + throttle)
+```
+
+---
+
+### 🧮 Advanced Lane Detection – Polynomial Fitting
+
+#### Waypoint Sampling Strategy
+```python
+# From AdvancedLaneDetection.detect_lane_markings()
+for i in range(20):  # Sample 20 waypoints ahead
+    current_waypoint = current_waypoint.next(5.0)[0]  # 5m intervals
+```
+
+Total lookahead: **20 × 5m = 100m**
+
+#### Lane Curvature Estimation
+For a polynomial lane model:
+```
+y(x) = a₀ + a₁x + a₂x² + a₃x³
+```
+
+Curvature at any point:
+```
+         |y''(x)|
+κ(x) = ─────────────────
+       [1 + y'(x)²]^(3/2)
+```
+
+Where:
+- `y'(x) = a₁ + 2a₂x + 3a₃x²`
+- `y''(x) = 2a₂ + 6a₃x`
+
+**Radius of curvature**:
+```
+R(x) = 1/κ(x)
+```
+
+---
+
+### 📊 Sensor Fusion Architecture
+
+#### Multi-Sensor Data Streams
+```
+Sensors = {
+    Camera:     RGB, Depth, Semantic Segmentation
+    LiDAR:      3D Point Cloud
+    GNSS:       (lat, lon, alt)
+    IMU:        (ax, ay, az, ωx, ωy, ωz)
+    Collision:  Impact events
+    Lane:       Marking crossings
+}
+```
+
+#### State Estimation Pipeline
+```
+1. Raw Sensor Data → Preprocessing
+2. Coordinate Frame Transformation
+3. Temporal Alignment (Synchronization)
+4. Kalman Filter Update
+5. Ego State Estimate → ADAS Modules
+```
+
+---
+
+### 🎯 Traffic Scenario Generation
+
+#### Behavioral Distribution
+```python
+# From spawn_traffic_vehicles()
+for i, actor in enumerate(all_vehicle_actors):
+    if i % 3 == 0:
+        # Aggressive (33%): 20% faster, 1.5m following
+        traffic_manager.vehicle_percentage_speed_difference(actor, -20)
+        traffic_manager.distance_to_leading_vehicle(actor, 1.5)
+    elif i % 3 == 1:
+        # Normal (33%): Rule-following
+        traffic_manager.vehicle_percentage_speed_difference(actor, 0)
+        traffic_manager.distance_to_leading_vehicle(actor, 2.5)
+    else:
+        # Cautious (33%): 20% slower, 3.5m following
+        traffic_manager.vehicle_percentage_speed_difference(actor, 20)
+        traffic_manager.distance_to_leading_vehicle(actor, 3.5)
+```
+
+**Speed Distribution**:
+- **Aggressive**: v_nominal × 1.20
+- **Normal**: v_nominal × 1.00
+- **Cautious**: v_nominal × 0.80
+
+---
+
+### 🔧 Performance Optimizations
+
+#### Spatial Hashing for Collision Detection
+```
+Complexity: O(n) → O(k·log k)
+```
+Where `k` is the average number of vehicles per grid cell.
+
+#### Early Termination Heuristics
+```python
+if distance > self.max_detection_range:
+    continue  # Skip distant vehicles
+```
+
+#### Caching Waypoint Queries
+```python
+self.last_waypoint = waypoint  # Avoid redundant map lookups
+```
+
+---
+
+### 🧠 Engineering Insight
+
+This architecture intentionally:
+- ✅ Favors **geometric projections over perception** (computational efficiency)
+- ✅ Uses **hard safety thresholds** instead of learned policies (interpretability)
+- ✅ Ensures **deterministic behavior** under synchronous simulation (reproducibility)
+- ✅ Is directly portable to **embedded real-time systems** (no heavy ML frameworks)
+
+The system is therefore ideal for **ISO-aligned ADAS prototyping and validation**.
+
+---
+
+### 🔢 Key Numerical Parameters Summary
+
+| Parameter | Symbol | Value | Unit | Standard |
+|-----------|--------|-------|------|----------|
+| FCW Warning Threshold | TTC_warn | 2.0 | s | ISO 15623 |
+| FCW Critical Threshold | TTC_crit | 1.0 | s | ISO 15623 |
+| AEB Activation | TTC_aeb | 0.8 | s | - |
+| ACC Time Gap | h | 2.0 | s | ISO 15622 |
+| ACC Min Distance | d_min | 5.0 | m | ISO 15622 |
+| LDW Warning | e_y,warn | 0.5 | m | ISO 17361 |
+| LDW Critical | e_y,crit | 0.75 | m | ISO 17361 |
+| BSD Longitudinal | x_bsd | [-2, 5] | m | - |
+| BSD Lateral | y_bsd | [1.5, 3.5] | m | - |
+| Forward Cone Angle | θ_fwd | 45.37° | deg | - |
+| Min Closing Speed | v_c,min | 0.5 | m/s | - |
+
+---
+
 ## 📚 References
 
 1. ISO 15623:2013 - Forward Vehicle Collision Warning Systems
@@ -721,6 +1265,8 @@ This project is based on CARLA's automatic control example, licensed under the M
 3. ISO 17361:2017 - Lane Departure Warning Systems
 4. Dosovitskiy, A., et al. (2017). "CARLA: An Open Urban Driving Simulator"
 5. Winner, H., et al. (2016). "Handbook of Driver Assistance Systems"
+6. Rajamani, R. (2011). "Vehicle Dynamics and Control" - Springer
+7. NHTSA (2015). "Crash Imminent Braking (CIB) Test Procedure"
 
 ---
 
