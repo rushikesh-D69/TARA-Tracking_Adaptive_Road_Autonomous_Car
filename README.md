@@ -8,6 +8,7 @@
 
 A high-fidelity, ISO-parameter-aligned Advanced Driver Assistance System (ADAS) development pipeline implemented inside the **CARLA Autonomous Driving Simulator**. This project demonstrates a complete **Simulation → Verification → Real-World Deployment** workflow for modular ADAS components.
 
+HARDWARE IMPLEMENTATION : https://github.com/rushikesh-D69/tara_hardware
 ---
 
 ![Main View](src/IMG-20251127-WA0010.jpg)
